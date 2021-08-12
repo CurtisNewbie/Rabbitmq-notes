@@ -37,9 +37,9 @@ For example,
 
 - Messages in queues are ordered based on FIFO
 - Ordering of messages delivery might be affected by
-  1. competing consumers
-  2. consumer priorities
-  3. message redeliveries
+    - competing consumers
+    - consumer priorities
+    - message redeliveries
 
 i.e., messages in the same queue are sent in order, but the order of their delivery is not.
 
@@ -47,15 +47,15 @@ i.e., messages in the same queue are sent in order, but the order of their deliv
 
 - Queues can be:
 
-  - durable:
+    - durable:
     - metadata stored in disk
-  - transient:
+    - transient:
     - metadata stored in memory
 
 - Messages in these queues can also be:
-  - persistent:
+    - persistent:
     - if the queue is durable, and the message is persisitent, the message is recovered when the node restart
-  - transient:
+    - transient:
     - if the queue is durable, but the message is transient, the message will still be discarded after a restart
 
 How to choose?
@@ -72,12 +72,12 @@ How to choose?
 Three way to make queues deleted automatically:
 
 - Exclusive Queues (to connection)
-  - these queues are deleted when the TCP connection is lost or closed
+    - these queues are deleted when the TCP connection is lost or closed
 - TTLs
-  - these queues are deleted when TTL is reached
+    - these queues are deleted when TTL is reached
 - Auto-delete queues
-  - deletd when the last consumer is cancelled using `basic.cancel`
-  - but it won't be deleted if it never has any arguments.
+    - deletd when the last consumer is cancelled using `basic.cancel`
+    - but it won't be deleted if it never has any arguments.
 
 ## 1.7 Message Acknowledgement
 
@@ -113,44 +113,43 @@ There are a few types of recovery:
 # 4. Message Properties & Delivery Metadata
 
 - Delivery & Routing Details (set at routing time):
-
-  - delivery tag
-    - identifier of message
-  - redelivered
-    - true / false
-  - exchange
-    - the exchagne that routes the message
-  - routing key
-    - key used to route messag, depends on exchange type
-  - consumer tags
-    - identifier of consumer
+    - delivery tag
+        - identifier of message
+    - redelivered
+        - true / false
+    - exchange
+        - the exchagne that routes the message
+    - routing key
+        - key used to route messag, depends on exchange type
+    - consumer tags
+        - identifier of consumer
 
 - Message properties:
-  - (except 'delivery mode', all the others are optional)
-  - delivery mode (mandatory):
-    - persistent / transient
-  - type
-    - app specific, e.g., "ordered created"
-  - headers
-    - key-value map metadata
-  - content type
-    - MIMIE e.g., 'application/json'
-  - content encoding
-    - used by app, e.g., 'grip'
-  - messsage id
-    - arbitrary ID
-  - correlation id
-    - used to correlate with responses
-  - reply to
-    - queue's name that the responses are routed to
-  - expiration
-    - message ttl
-  - timestamp
-    - provided by application
-  - user id
-    - validated if set
-  - app id
-    - application name
+    - (except 'delivery mode', all the others are optional)
+    - delivery mode (mandatory):
+        - persistent / transient
+    - type
+        - app specific, e.g., "ordered created"
+    - headers
+        - key-value map metadata
+    - content type
+        - MIMIE e.g., 'application/json'
+    - content encoding
+        - used by app, e.g., 'grip'
+    - messsage id
+        - arbitrary ID
+    - correlation id
+        - used to correlate with responses
+    - reply to
+        - queue's name that the responses are routed to
+    - expiration
+        - message ttl
+    - timestamp
+        - provided by application
+    - user id
+        - validated if set
+    - app id
+        - application name
 
 # 5. Pre-fetch
 
@@ -199,21 +198,21 @@ Publisher  ->  Exchange  <-> Queue
 ## 10.1 Common Errors For Publisher
 
 - Channel error:
-  - publishing to non-existing exchange.
+    - publishing to non-existing exchange.
 - message cannot be routed due to undefined binding:
-  - if property **mandatory** is set to false, this message may be discarded or republished to alternative one.
-  - if property **mandatory** is set to true, this message is returned back to the publisher, thus a handler will need to be setup to handle the returned messages
+    - if property **mandatory** is set to false, this message may be discarded or republished to alternative one.
+    - if property **mandatory** is set to true, this message is returned back to the publisher, thus a handler will need to be setup to handle the returned messages
 
 # 11. AMQP Exchange Type
 
 - Direct Exchange
-  - based on routing key, and routed with a round robin style
+    - based on routing key, and routed with a round robin style
 - Fanout Exchange
-  - all queues bound to it will receive the messages, it's broadcasting
+    - all queues bound to it will receive the messages, it's broadcasting
 - Topic Exchange
-  - routed by both routing keys and topics
+    - routed by both routing keys and topics
 - Header Exchange
-  - routed based on headers that are started with 'x-', i.e., custom headers.
+    - routed based on headers that are started with 'x-', i.e., custom headers.
 
 # 12. Connection
 
