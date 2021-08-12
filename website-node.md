@@ -48,15 +48,15 @@ i.e., messages in the same queue are sent in order, but the order of their deliv
 - Queues can be:
 
     - durable:
-    - metadata stored in disk
+        - metadata stored in disk
     - transient:
-    - metadata stored in memory
+        - metadata stored in memory
 
 - Messages in these queues can also be:
     - persistent:
-    - if the queue is durable, and the message is persisitent, the message is recovered when the node restart
+        - if the queue is durable, and the message is persisitent, the message is recovered when the node restart
     - transient:
-    - if the queue is durable, but the message is transient, the message will still be discarded after a restart
+        - if the queue is durable, but the message is transient, the message will still be discarded after a restart
 
 How to choose?
 
@@ -81,8 +81,10 @@ Three way to make queues deleted automatically:
 
 ## 1.7 Message Acknowledgement
 
-1. automatic - better throughput
-2. manual - improved guarantees of message delivery
+- automatic 
+    - better throughput
+- manual 
+    - improved guarantees of message delivery
 
 ## 1.8 Message States (for enqueued messages)
 
