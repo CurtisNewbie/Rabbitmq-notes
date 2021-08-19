@@ -37,13 +37,11 @@ Conversation Initialization:
 ```
     Client                         Server
        |                             |
-       |                             |
  Protocol Header ---------------->   |
        |                             |
        | <---------------------  Connection.Start
        |                             |
  Connection.StartOk ------------->   |
-       |                             |
        |                             |
 ```
 
@@ -156,24 +154,18 @@ If it was successful:
 
     Client                         Server
        |                             |
-       |                             |
  Exchange.Declare --------------->   |
        |                             |
-       |                             |
        | <---------------------  Exchange.DeclareOk
-       |                             |
        |                             |
 
 If it failed:
 
     Client                         Server
        |                             |
-       |                             |
  Exchange.Declare --------------->   |
        |                             |
-       |                             |
        | <---------------------  Channel.Close
-       |                             |
        |                             |
 ```
 
@@ -186,24 +178,18 @@ If it was successful:
 
     Client                         Server
        |                             |
-       |                             |
  Queue.Declare  ----------------->   |
        |                             |
-       |                             |
        | <---------------------  Queue.DeclareOk   
-       |                             |
        |                             |
 
 If it failed:
 
     Client                         Server
        |                             |
-       |                             |
  Queue.Declare  ----------------->   |
        |                             |
-       |                             |
        | <---------------------  Channel.Close     
-       |                             |
        |                             |
 ```
 
@@ -217,12 +203,9 @@ If it was successful:
 
     Client                         Server
        |                             |
-       |                             |
  Queue.Bind  -------------------->   |
        |                             |
-       |                             |
        | <---------------------  Queue.BindOk      
-       |                             |
        |                             |
 ```
 
@@ -235,12 +218,9 @@ When RabbitMQ receives the message, it will try to match the *exchange name* in 
 ```
     Client                         Server
        |                             |
-       |                             |
  Basic.Publish (method frame) --->   |
        |                             |
-       |                             |
  Content-Header Frame ----------->   |
-       |                             |
        |                             |
  Body Frame --------------------->   |
        |                             |
@@ -253,21 +233,15 @@ When a client wants to consume messages from a specified queue or topics, it sen
 ```
     Client                         Server
        |                             |
-       |                             |
  Basic.Consume (method frame) --->   |
-       |                             |
        |                             |
        | <---------------------  Basic.ConsumeOk (method frame)
        |                             |
-       |                             |
        | <---------------------  Basic.Deliver (method frame)
-       |                             |
        |                             |
        | <---------------------  Content Header Frame 
        |                             |
-       |                             |
        | <---------------------  Body Frame(s)
-       |                             |
        |                             |
 ```
 
@@ -276,12 +250,9 @@ When the client wants to stop receiving messages, it may sends a **`Basic.Cancel
 ```
     Client                         Server
        |                             |
-       |                             |
  Basic.Cancel  (method frame) --->   |
        |                             |
-       |                             |
        | <---------------------  Basic.CancelOk (method frame)
-       |                             |
        |                             |
 ```
 
@@ -291,7 +262,6 @@ When the client wants to stop receiving messages, it may sends a **`Basic.Cancel
 
 ```
     Client                         Server
-       |                             |
        |                             |
        | <---------------------  Basic.Deliver (delivery tag)
        |                             |
@@ -421,15 +391,11 @@ When publishers keep publishing data to server, under heavy load, server will ev
        |                             |
  Basic.Get ---------------------->   |
        |                             |
-       |                             |
        | <---------------------  Basic.GetOk           
-       |                             |
        |                             |
        | <---------------------  Message 
        |                             |
-       |                             |
  Basic.Ack ---------------------->   |
-       |                             |
        |                             |
 ```
 
@@ -440,21 +406,15 @@ When publishers keep publishing data to server, under heavy load, server will ev
        |                             |
  Basic.Consume ------------------>   |
        |                             |
-       |                             |
        | <---------------------  Basic.ConsumeOk       
-       |                             |
        |                             |
        | <---------------------  Message 1 
        |                             |
-       |                             |
  Basic.Ack ---------------------->   |
-       |                             |
        |                             |
        | <---------------------  Message 2
        |                             |
-       |                             |
  Basic.Ack ---------------------->   |
-       |                             |
        |                             |
 ```
 
@@ -524,3 +484,96 @@ If a message is rejected/'nacked', and it's mandatory, broker will try to redeli
 - Maximum length queue
     - queues with maximum size, once it reaches the limit, it will drop messages from the front (earliest messages) 
     - by setting **`x-max-length`** that enforces a maximum length for the queue
+
+# 6. Chap 6 - Message Patterns via Exchange Routing
+
+- Direct Exchange  
+- Fanout Exchange
+- Topic Exchange
+- Headers Exchange
+
+## 6.1 Direct Exchange
+
+Direct exchange routes messages to queues based on routing keys. Multiple queues can use the same routing key to bind to the same exchange, these queues will receive all messages published with that routing key. 
+
+```
+                   / ----> Queue1
+          Rk1     /
+Exchange  -------    ----> Queue2
+                  \
+                   \ ----> Queue3
+```
+
+If multiple use the same queue, these messages are dispatched to these consumers in round-robin fashion.
+
+*Typical Usage:*
+
+The gateway can use websocket to maintain a connection with the client, client request some heavy jobs, which is published to worker queue and consumed by a cluster of worker nodes, one of these worker gets to do the job and replies the response to the response queue with a correct `correlation_id`, the gateway consumes messages from response queue, it can then identifies which client requested the job by `correlation_id`, and sends the result back to the client.
+
+```
+                        
+Internet ---> gateway ---> worker queue ---> worker node ---> response queue 
+```
+
+## 6.2 Fanout Exchange
+
+All messages published through a fanout exchange are delivered to all queues bound to this exchange.
+
+*Typical Usage:*
+
+Fanout is used to broadcast the received request. Say that we want to process requests and meanwhile log the requested operations to maintain a operation history for each client, we can simply add an extra queue for the service.
+
+```
+Internet ---> gateway ---> worker queue ---> worker node ---> response queue 
+                                    |
+                                    |                      
+                                    -> operate log queue ---> operate log service 
+```
+
+## 6.3 Topic Exchange
+
+Topic exchange is just like direct exchange, except that it routes messages based on topics. Clients can also subscribe to topics based on wildcard-based patterns (e.g., `image.processing.*`). Topics are hierarchical delimited with `.`. E.g., `image.processing.facerecoginition`, 'image' is the top-level categorization, 'processing' indicates that we are doing some sort of processing for the image, and finally 'facerecognition' tells that it's facial recognition. We may also have other keys like `image.storage.save`.
+
+E.g.,
+
+```
+                        
+Internet ---> gateway -----------> worker queue  (image.processing.*)
+                               |
+                               |                      
+                               --> operate log queue (image.*)
+                               |
+                               |
+                               --> storage queue for saving (image.storage.save)
+                               |
+                               |
+                               --> storage queue for removal (image.storage.remove)
+```
+
+## 6.4 Header Exchange 
+
+Header Exchange routes messages based on the `headers` on `Basic.Properties` table. To enable this feature, client need to specify **`x-match`** argument in using **`Queue.Bind`**, it can either be set to `any` then the exchange doesn't attempt to match key-value pairs in `headers`, or it can be set to `all` then all key-value pairs in `headers` must match so that the messages are routed to the queue.
+
+E.g., say we are migrating from monolithic system to a microservice architecture, and we using MQ as an adaptor between the two systems.
+
+We set a few arguments in `headers` for a queue that is used for microservice:
+```
+{
+    'x-match' : 'all',
+    'profile' : 'microservice'
+}
+```
+
+We set a few arguments in `headers` for a queue that is used for monolithic system:
+```
+{
+    'x-match' : 'all',
+    'profile' : 'monolithic'
+}
+```
+
+Then, for messages that should be routed to monolithic system, we add argument `profile=monolithic` to message's `headers`, then this message is only routed to the queue for monolithic system.
+
+## 6.5 Exchange-To-Exchange Routing
+
+We can bind exchange to exchange just like how we bind queue to exchange using **`Exchange.Bind`**, all the above functionalities work (e.g., fanout, direct and so on). This adds flexibility as well as complexity, should only be used when there is a strong use case for it.
