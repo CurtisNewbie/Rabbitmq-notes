@@ -64,7 +64,7 @@ When commands are sent to and from RabbitMQ, all the arguments involved are enca
 
 ### 2.3.2 Frame
 
-A AMQP Frame is composed of five components:
+An AMQP Frame is composed of five components:
 
 1. Frame type
 2. Channel number
@@ -87,7 +87,7 @@ The first three components are collectively called **Frame Header**:
 - Channel number
     - field that specifies the channel 
 - Frame size in bytes
-    - byte size payload
+    - byte size of payload
 
 ### 2.3.4 Types of Frames
 
@@ -96,7 +96,7 @@ AMQP specifies five types of frames:
 1. Protocol header frame
     - only used once for connection 
 2. Method frame
-    - carries RPC request or responses
+    - carries RPC requestes or responses
 3. Content header frame
     - size and properties for messages
 4. Body frame
@@ -113,11 +113,11 @@ Below is what happens when client sends a message to RabbitMq:
 Let's say we are using `channel 1`.
 
 1. Client sends a **Method Frame** to server
-    - wherein the `frame_type=1` (for method frame), `channel=1`, and the payload contains the method that client is going to use, in this case, it's **``Basic.Publish`**, 
+    - the `frame_type=1` (for method frame), `channel=1`, and the payload contains the method that client is going to use, in this case, it's **`Basic.Publish`**, 
 2. Client sends a **Content Header Frame** to server
-    - wherein the `frame_type=2` (for content header frame), but channel is still the same. Payload now contains the properties of the message, including the size of it, so that RabbitMQ can properly handle the following one or more body frames. 
+    - the `frame_type=2` (for content header frame), but channel is still the same. Payload now contains the properties of the message, including the size of it, so that RabbitMQ can properly handle the following one or more body frames. 
 3. Client sends one or more **Body Frame** to server
-    - wherein the `frame_type=3` (for body frame), but channel is still the same. Payload now contains the actual data of the message.
+    - the `frame_type=3` (for body frame), but channel is still the same. Payload now contains the actual data of the message.
 
 ### 2.3.6 Anatomy of Method Frame
 
@@ -135,7 +135,7 @@ Content header frame contains properties of a message (a **Basic.Properties** ta
 
 The anatomy of a content header frame is as follows:
 
-|Size of message | Which properties are set | Content type | app_id | timestamp | delivery mode | 
+|Messge Size | Properties set | Content type | app_id | timestamp | delivery mode | 
 ---|---|---|---|---|---
 55 | 144, 200 | application/json | TestApp |  1014206980 | 1 
 
@@ -323,11 +323,11 @@ The broker "fires and forgets" the messages, if the consumers are disconnected, 
 
 ### 4.1.2 Reject Non-Routable Messages (Notification of Failure)
 
-When **`mendatory flag`** is set on **Basic.Publish** method frame, RabbitMQ checks if the published message is routable (e.g., check specified exchange and binding). If it's found that the message is not routable, and it's mendatory, it returns the message back to the publisher via **`Basic.Return`** method frame. This is a kind of notification of failure. However, it this flag is not set at all, the messages will be silently dropped, no notification of failure is ever received by the publisher.
+When **`mendatory flag`** is set on **`Basic.Publish`** method frame, RabbitMQ checks if the published message is routable (e.g., check specified exchange and binding). If it's found that the message is not routable, and it's mendatory, it returns the message back to the publisher via **`Basic.Return`** method frame. This is a kind of notification of failure. However, it this flag is not set at all, the messages will be silently dropped, no notification of failure is ever received by the publisher.
 
 ### 4.1.3 Publisher Confirms 
 
-**Publisher Confirms** is a lightweight alternative to transactions, it's an extension to AMQP. It's used to assure the *message delivery between publisher and RabbitMQ server*. Prior to message publishing, publisher sends a **`Confirm.Select`** to server, server replies **`Confirm.SelectOk`** to tell that delivery confirmation is enabled between publisher and server. At this point, for every messages that publisher sends to server, RabbitMQ will respond an acknowledgement **`Basic.Ack`** or a negative acknowledgement **`Basic.Nack`**. E.g., if message can't be routed, RabbitMQ will respond a `Basic.Nack`.
+**`Publisher Confirms`** is a lightweight alternative to transactions, it's an extension to AMQP. It's used to assure the *message delivery between publisher and RabbitMQ server*. Prior to message publishing, publisher sends a **`Confirm.Select`** to server, server replies **`Confirm.SelectOk`** to tell that delivery confirmation is enabled between publisher and server. At this point, for every messages that publisher sends to server, RabbitMQ will respond an acknowledgement **`Basic.Ack`** or a negative acknowledgement **`Basic.Nack`**. E.g., if message can't be routed, RabbitMQ will respond a `Basic.Nack`.
 
 ```
     Client                         Server
@@ -368,7 +368,7 @@ Publisher can also explicitly specify nodes that this message should be mirrored
 
 ### 4.1.7 HA Queues with Transactions
 
-HA Queues with Transactions is almost the same, except that the transaction won't commit until al nodes have a copy of the message, which is much slower than pure transactions.
+HA Queues with Transactions is almost the same, except that the transaction won't commit until all nodes have a copy of the message, which is much slower than pure transactions.
 
 ### 4.1.8 Persisting Messages to Disk via Delivery-Mode 2
 
@@ -487,7 +487,9 @@ If a message is rejected/'nacked', and it's mandatory, broker will try to redeli
 
 # 6. Chap 6 - Message Patterns via Exchange Routing
 
-- Direct Exchange  
+Exchange Types: 
+
+- Direct Exchange
 - Fanout Exchange
 - Topic Exchange
 - Headers Exchange
@@ -508,7 +510,7 @@ If multiple use the same queue, these messages are dispatched to these consumers
 
 *Typical Usage:*
 
-The gateway can use websocket to maintain a connection with the client, client request some heavy jobs, which is published to worker queue and consumed by a cluster of worker nodes, one of these worker gets to do the job and replies the response to the response queue with a correct `correlation_id`, the gateway consumes messages from response queue, it can then identifies which client requested the job by `correlation_id`, and sends the result back to the client.
+The gateway can use websocket to maintain a connection with the client, client request some heavy jobs, which is published to worker queue and consumed by a cluster of worker nodes, one of these worker gets to do the job and replies the response to the response queue with a correct `correlation_id`, the gateway consumes messages from response queue, it can then identify which client requested the job by `correlation_id`, and sends the result back to the client.
 
 ```
                         
@@ -532,13 +534,13 @@ Internet ---> gateway ---> worker queue ---> worker node ---> response queue
 
 ## 6.3 Topic Exchange
 
-Topic exchange is just like direct exchange, except that it routes messages based on topics. Clients can also subscribe to topics based on wildcard-based patterns (e.g., `image.processing.*`). Topics are hierarchical delimited with `.`. E.g., `image.processing.facerecoginition`, 'image' is the top-level categorization, 'processing' indicates that we are doing some sort of processing for the image, and finally 'facerecognition' tells that it's facial recognition. We may also have other keys like `image.storage.save`.
+Topic exchange is just like direct exchange, except that it routes messages based on topics. Clients can also subscribe to topics based on wildcard-based patterns (e.g., `image.processing.*`). Topics are hierarchical delimited with '`.`'. E.g., 'image.processing.facerecoginition', 'image' is the top-level categorization, 'processing' indicates that we are doing some sort of processing for the image, and finally 'facerecognition' tells that the processing is face recognition. We may also have other keys like 'image.storage.save'.
 
 E.g.,
 
 ```
                         
-Internet ---> gateway -----------> worker queue  (image.processing.*)
+Internet ---> gateway -----------> process queue  (image.processing.*)
                                |
                                |                      
                                --> operate log queue (image.*)
@@ -552,7 +554,7 @@ Internet ---> gateway -----------> worker queue  (image.processing.*)
 
 ## 6.4 Header Exchange 
 
-Header Exchange routes messages based on the `headers` on `Basic.Properties` table. To enable this feature, client need to specify **`x-match`** argument in using **`Queue.Bind`**, it can either be set to `any` then the exchange doesn't attempt to match key-value pairs in `headers`, or it can be set to `all` then all key-value pairs in `headers` must match so that the messages are routed to the queue.
+Header Exchange routes messages based on the `headers` on `Basic.Properties` table. To enable this feature, client need to specify **`x-match`** argument in using **`Queue.Bind`**, it can either be set to **`any`** then the exchange doesn't attempt to match key-value pairs in `headers`, or it can be set to **`all`** then all key-value pairs in `headers` must match so that the messages are routed to the queue.
 
 E.g., say we are migrating from monolithic system to a microservice architecture, and we using MQ as an adaptor between the two systems.
 
@@ -572,7 +574,7 @@ We set a few arguments in `headers` for a queue that is used for monolithic syst
 }
 ```
 
-Then, for messages that should be routed to monolithic system, we add argument `profile=monolithic` to message's `headers`, then this message is only routed to the queue for monolithic system.
+Then, for messages that should be routed to monolithic system, we add argument '`profile=monolithic`' to message's `headers`, then this message is only routed to the queue for monolithic system.
 
 ## 6.5 Exchange-To-Exchange Routing
 
