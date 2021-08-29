@@ -31,7 +31,7 @@ Conversation Initialization:
 
 1. Client starts the conversation by sending a protocol header, which is neither a request nor a command.  
 2. Server replies with a **`Connection.Start`**.
-3. lient responds with **`Connection.StartOk`**.
+3. Client responds with **`Connection.StartOk`**.
 
 
 ```
@@ -47,7 +47,7 @@ Conversation Initialization:
 
 ## 2.2 Channels Over Connection
 
-AMQP specifies Channels for communcation, which is essentially an unique id for each channel assigned to all messages, such that these conversations are isolated from each other within the same connection. This is sometime called **multiplexing**. RabbitMQ indeed sets up structures for each channel to manage the message flows for different conversation, however, it's important not to over-complicate things by opening lots of channels if it's not really needed.
+AMQP specifies Channels for communication, which is essentially an unique id for each channel assigned to all messages, such that these conversations are isolated from each other within the same connection. This is sometime called **multiplexing**. RabbitMQ indeed sets up structures for each channel to manage the message flows for different conversation, however, it's important not to over-complicate things by opening lots of channels if it's not really needed.
 
 ## 2.3 AMQP's RPC Frame Structure
 
@@ -96,7 +96,7 @@ AMQP specifies five types of frames:
 1. Protocol header frame
     - only used once for connection 
 2. Method frame
-    - carries RPC requestes or responses
+    - carries RPC requests or responses
 3. Content header frame
     - size and properties for messages
 4. Body frame
@@ -106,7 +106,7 @@ AMQP specifies five types of frames:
 
 I.e., when clients send messages, the method frame, content header frame and body frame are used. Protocol header frame, however, is only used for opening connection (not the one for TCP), and heartbeat frame is used to check if the opposite side is still operating. 
 
-### 2.3.5 Marshelling Messages in Frames 
+### 2.3.5 Marshalling Messages in Frames 
 
 Below is what happens when client sends a message to RabbitMq: 
 
@@ -121,7 +121,7 @@ Let's say we are using `channel 1`.
 
 ### 2.3.6 Anatomy of Method Frame
 
-Method frames specifies the **class**, **method** as well as other arguments that the request is going to use. For **`Basic.Publish`**, the class will be **`Basic`** and the method will be **`Publish`**, the other arguments include **`Exchange Name`**, **`Routing Key`**, and **`Mendatory Flag`**. These are all encoded inside the method frame.
+Method frames specifies the **class**, **method** as well as other arguments that the request is going to use. For **`Basic.Publish`**, the class will be **`Basic`** and the method will be **`Publish`**, the other arguments include **`Exchange Name`**, **`Routing Key`**, and **`Mandatory Flag`**. These are all encoded inside the method frame.
 
 E.g., for **`Basic.Publish`** method frame:
 
@@ -135,7 +135,7 @@ Content header frame contains properties of a message (a **Basic.Properties** ta
 
 The anatomy of a content header frame is as follows:
 
-|Messge Size | Properties set | Content type | app_id | timestamp | delivery mode | 
+|Message Size | Properties set | Content type | app_id | timestamp | delivery mode | 
 ---|---|---|---|---|---
 55 | 144, 200 | application/json | TestApp |  1014206980 | 1 
 
@@ -213,7 +213,7 @@ If it was successful:
 
 When client is about to publish a message, it will at least send three frames, 1) a `Basic.Publish` method frame to specify the method it will use, 2) a content header frame and 3) one or more body frames. 
 
-When RabbitMQ receives the message, it will try to match the *exchange name* in the `Basic.Publish` method frame to verify if such an exchange actually exists. If the exchange doesn't exist, the mandatory flag is not set, this message is sliently dropped. RabbitMQ then evaluates the queue and routing keys, when such evaluation succeeds, it **enqueues the reference to the message instead of the actual message body**. The messages inside queue are stored in memory or disk depending on the **delivery-mode** property specified in content header frame.
+When RabbitMQ receives the message, it will try to match the *exchange name* in the `Basic.Publish` method frame to verify if such an exchange actually exists. If the exchange doesn't exist, the mandatory flag is not set, this message is silently dropped. RabbitMQ then evaluates the queue and routing keys, when such evaluation succeeds, it **enqueue the reference to the message instead of the actual message body**. The messages inside queue are stored in memory or disk depending on the **delivery-mode** property specified in content header frame.
 
 ```
     Client                         Server
@@ -286,7 +286,7 @@ Basic.Properties is a predefined data structure used to describe a message, it's
 - delivery-mode
     - a byte field that tells the broker, whether messages should be persisted in disk or stored in memory.
 - message-id & correlation-id
-    - for application use, no formaly defined behaviour. These two are often used to track messages that flow in/out the system. E.g., a reply `Mr` to a message `Mx` with message id `x'` may contain a correlation-id the value `x'`. Such that the receiver of message `Mr` will know that this message correlates to the message `Mx`.
+    - for application use, no formally defined behaviour. These two are often used to track messages that flow in/out the system. E.g., a reply `Mr` to a message `Mx` with message id `x'` may contain a correlation-id the value `x'`. Such that the receiver of message `Mr` will know that this message correlates to the message `Mx`.
 - app-id & user-id
     - user-id is validated by RabbitMQ for authentication. These two are used to validate the source of the messages or to gather statistical data.
 - priority
@@ -302,11 +302,11 @@ Basic.Properties is a predefined data structure used to describe a message, it's
 
 # 4. Chap 4 - Performance Trade-Offs in Publishing
 
-## 4.1 Balacing Delivery Speed with Guaranteed Delivery
+## 4.1 Balancing Delivery Speed with Guaranteed Delivery
 
 There is a trade-off between reliable message delivery and performance.  
 
-*From performant to slow but reliable mechanisms:*
+*From preferment to slow but reliable mechanisms:*
 
 No Guarantees|Failure Notification|Publisher Confirms|Alternate Exchanges|
 --- | --- |  --- | --- 
@@ -323,7 +323,7 @@ The broker "fires and forgets" the messages, if the consumers are disconnected, 
 
 ### 4.1.2 Reject Non-Routable Messages (Notification of Failure)
 
-When **`mendatory flag`** is set on **`Basic.Publish`** method frame, RabbitMQ checks if the published message is routable (e.g., check specified exchange and binding). If it's found that the message is not routable, and it's mendatory, it returns the message back to the publisher via **`Basic.Return`** method frame. This is a kind of notification of failure. However, it this flag is not set at all, the messages will be silently dropped, no notification of failure is ever received by the publisher.
+When **`mandatory flag`** is set on **`Basic.Publish`** method frame, RabbitMQ checks if the published message is routable (e.g., check specified exchange and binding). If it's found that the message cannot be routed, and it's mandatory, it returns the message back to the publisher via **`Basic.Return`** method frame. This is a kind of notification of failure. However, it this flag is not set at all, the messages will be silently dropped, no notification of failure is ever received by the publisher.
 
 ### 4.1.3 Publisher Confirms 
 
@@ -354,7 +354,7 @@ The alternate exchange is declared in the argument **`alternate-exchange`** in *
 
 ### 4.1.5 Batch Processing with Transactions
 
-Transaction provides a way to notify publisher the successful delivery of a message to a queue on RabbitMQ. To begin a transaction, client sends a **`TX.Select`** request, and server will respond a **`TX.SelectOk`** indicating that the transaction is started. Then publisher can start sending one or more messages, and server may repond **`Basic.Return`** if a message is unroutable, then the publisher will decide what to do for this transaction. 
+Transaction provides a way to notify publisher the successful delivery of a message to a queue on RabbitMQ. To begin a transaction, client sends a **`TX.Select`** request, and server will respond a **`TX.SelectOk`** indicating that the transaction is started. Then publisher can start sending one or more messages, and server may respond **`Basic.Return`** if a message is unroutable, then the publisher will decide what to do for this transaction. 
 
 Transactions are explicitly committed or rollbacked using **`TX.Commit`** and **`TX.Rollback`**. Such transactions in RabbitMQ are atomic, which means that unless all messages are processed, client won't receive **`TX.CommitOk`** which indicates that a transaction is committed. Transaction in RabbitMQ only impact messages delivered to the same queue, and it may decrease performance of publisher, since publishers will have to wait a bit longer for the transaction to commit or rollback.
 
@@ -427,7 +427,7 @@ When client issues a **`Basic.Consume`**, a string (**consumer tag**) is created
 ```
 csm: Basic.Consume 
 get: Basic.Get
-ack: Basck.Ack
+ack: Basic.Ack
 ```
 
 csm + ack & QoS > 1|csm + no-ack|csm + ack|csm + transactions|get|
@@ -438,17 +438,17 @@ Fast | <- | - | -> | Slow
 
 Consumers can enable **no-ack** mode by setting **`no-ack`** flag in **`Basic.Consume`** method frame. When messages are not acknowledged at all, the throughput is maximized, because server doesn't wait at all to send the next message to consumer. 
 
-### 5.2.2 Prefeching & Quality of Service (QoS)
+### 5.2.2 Pre-fetching & Quality of Service (QoS)
 
-QoS or Pre-fetching is essentially a setting by which consumers can specify *the number of messages to be received before consumer acknowledging the received messages*. These messages are acknowledged in batches (not using `Basic.Ack`), if the consumer crashes before it can acknowledges the messages, all the pre-fetched messages will return to the queue. This setting is configured through sending **`Basic.QoS`**. Based on it's characterisics, the value of QoS should be adjusted to a optimal level according to the architecture being used, the business need and so on.
+QoS or Pre-fetching is essentially a setting by which consumers can specify *the number of messages to be received before consumer acknowledging the received messages*. These messages are acknowledged in batches (not using `Basic.Ack`), if the consumer crashes before it can acknowledges the messages, all the pre-fetched messages will return to the queue. This setting is configured through sending **`Basic.QoS`**. Based on it's characteristics, the value of QoS should be adjusted to a optimal level according to the architecture being used, the business need and so on.
 
 ### 5.2.3 Consuming Messages in Transactions
 
-Transactions don't work for consumers with acknowledgements disabled. Just like message publishing with transaction enabled, message consuming are committed or rollback. It has negative performance impact, when transaction is used with QoS (value greater than 1), because transactions are only comitted when all pre-fetched messages are committed.
+Transactions don't work for consumers with acknowledgements disabled. Just like message publishing with transaction enabled, message consuming are committed or rollback. It has negative performance impact, when transaction is used with QoS (value greater than 1), because transactions are only committed when all pre-fetched messages are committed.
 
 ## 5.3 Rejecting Messages
 
-Consumer can reject messages using **`Basic.Reject`** or **`Basic.Nack`**, both of them tell RabbitMQ that messages are not properly processed. `Basic.Reject` only works for single message, but `Basic.Nack` works for multiple messages. `Basic.Reject` is an AMQP command, and `Basic.Nack` is a RabbitMQ-specific command. Similarly, they both work by carring the **delivery tag** (from `Basic.Deliver`) to the server. 
+Consumer can reject messages using **`Basic.Reject`** or **`Basic.Nack`**, both of them tell RabbitMQ that messages are not properly processed. `Basic.Reject` only works for single message, but `Basic.Nack` works for multiple messages. `Basic.Reject` is an AMQP command, and `Basic.Nack` is a RabbitMQ-specific command. Similarly, they both work by carrying the **delivery tag** (from `Basic.Deliver`) to the server. 
 
 ### 5.3.1 Redelivered Attribute
 
@@ -477,7 +477,7 @@ If a message is rejected/'nacked', and it's mandatory, broker will try to redeli
 
 - Queue durability
     - queues that will persist after server restarts
-    - by seting **`durable`** flag to true
+    - by setting **`durable`** flag to true
 - Auto-expiration of messages in queue
     - queues that expire messages if which are not consumed over a long time 
     - by setting **`x-message-ttl`** that enforces a maximum age for all messages in the queue 
